@@ -1,0 +1,26 @@
+spring:
+  ai:
+    vectorstore:
+      chroma:
+        client:
+          host: api.trychroma.com
+        collection:
+          name: customer-support-messages
+        embedding:
+          dimension: 384
+    mcp:
+      client:
+        name: spring-ai-mcp-client
+        sse:
+          connections:
+            server1:
+              url: http://localhost:9090
+              sse-endpoint: /sse
+        toolcallback:
+          enabled: true
+  application:
+    name: spring-ai
+server:
+  servlet:
+    context-path: /spring-ai
+  port: 8090

@@ -1,0 +1,20 @@
+GET http://localhost:8080/spring-ai/ai/promote/template?userName=海洋
+
+###
+
+GET http://localhost:8080/spring-ai/ai/client/configuration/model1
+
+###
+GET http://localhost:8080/spring-ai/ai/client/configuration/model2
+
+###
+GET http://localhost:8080/spring-ai/ai/chat/memory?userInput=我是谁
+
+###
+GET http://localhost:8080/spring-ai/ai/tools?userInput=John距离下次过生日还有多久
+
+###
+GET http://localhost:8080/spring-ai/ai/mcp?userInput=请给我推荐一个视频公众号
+
+###
+GET http://localhost:8090/spring-ai/ai/rag?userInput=feed_basic_info中的feed_type与sub_feed_info中的feed_type有什么不同

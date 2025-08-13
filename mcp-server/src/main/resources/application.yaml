@@ -1,0 +1,9 @@
+server:
+  port: 9090
+spring:
+  ai:
+    mcp:
+      server:
+        name: mcp-server
+        sse-message-endpoint: /mcp/message
+        sse-endpoint: /sse
