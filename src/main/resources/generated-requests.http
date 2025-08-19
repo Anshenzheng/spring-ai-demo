@@ -18,3 +18,34 @@ GET http://localhost:8080/spring-ai/ai/mcp?userInput=请给我推荐一个视频
 
 ###
 GET http://localhost:8090/spring-ai/ai/rag?userInput=feed_basic_info中的feed_type与sub_feed_info中的feed_type有什么不同
+
+###
+http://localhost:8090/spring-ai/ai/query/tools?userInput=please%20help%20me%20search%20the%20feed%20with%20name%20like%20assumption%20and%20belongs%20to%20workstream%20TWDD
+
+###
+GET http://localhost:8090/spring-ai/ai/query/feed
+
+###
+GET http://localhost:8090/spring-ai/ai/agent/stream?userInput=who are you, what you can do for me
+
+###
+GET http://localhost:8090/spring-ai/ai/agent?userInput=现在数据库中一共有多少条记录，每个workstream各有多少条
+
+###
+GET http://localhost:8090/spring-ai/ai/agent?userInput=what you can do for me
+
+
+###
+GET http://localhost:8090/spring-ai/ai/agent?userInput=I don't know the job name, I only know the feed name contains keyword "assumption"
+
+###
+GET http://localhost:8090/spring-ai/ai/agent?userInput=the job name is 12345_ETL_assumptions_loading
+
+###
+GET http://localhost:8090/spring-ai/ai/agent?userInput=Can you try again?
+
+###
+GET http://localhost:8090/spring-ai/ai/agent/graph?userInput=who are you
+
+###
+GET http://localhost:8090/spring-ai/ai/agent/graph?userInput=who are you
