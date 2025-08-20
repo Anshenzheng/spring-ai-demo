@@ -19,6 +19,7 @@ import org.springframework.ai.document.DocumentTransformer;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
@@ -40,18 +41,21 @@ import static org.an.springai.config.Constant.AGENT_SYSTEM_PROMPT;
         allowCredentials = "true", // 是否允许Cookie
         maxAge = 3600 // 预检有效期
 )
-public class AiController {
+public class AiModelTestController {
+
+    @Autowired
+    private ChatClient chatClient;
+
     @Autowired
     private ChatModel zhiPuAiChatModel;
 
     @Autowired
+    @Qualifier("zpChatGlm4vFlashClient")
     private ChatClient zpChatGlm4vFlashClient;
 
     @Autowired
+    @Qualifier("zpChatGlm4PlusClient")
     private ChatClient zpChatGlm4PlusClient;
-
-    @Autowired
-    private DocumentTransformer documentTransformer;
 
     @Autowired
     private ChatMemory chatMemory;
@@ -62,34 +66,14 @@ public class AiController {
     @Autowired
     private VectorStore dietGuideStore;
 
-    @Autowired
-    private VectorStore dietBatchIssueStore;
 
     @Autowired
-    private SafeSqlExecutor safeSqlExecutor;
+    @Qualifier("openAiClient")
+    private ChatClient openAiClient;
 
     @Autowired
-    SupervisorAgent supervisorAgent;
-
-
-    /**
-     * 用于将文档注入向量数据库，首次使用时将需 IS_THE_FIRST_TIME_TO_USE_THIS_APP 变量值置为true
-     */
-
-    private final boolean IS_THE_FIRST_TIME_TO_USE_THIS_APP = false;
-
-    @PostConstruct
-    public void init(){
-
-        if(IS_THE_FIRST_TIME_TO_USE_THIS_APP){
-            Resource resourceDIETGuide = new PathResource(Paths.get("src/main/resources/DIET_Guide.pdf").toAbsolutePath());
-            VectorUtil.ingestDocToVectorStore(dietGuideStore,documentTransformer, resourceDIETGuide);
-
-            Resource resourceDIETBatch = new PathResource(Paths.get("src/main/resources/DIET_Batch_Issue_Tracker.pdf").toAbsolutePath());
-            VectorUtil.ingestDocToVectorStore(dietBatchIssueStore,documentTransformer, resourceDIETBatch);
-        }
-
-    }
+    @Qualifier("deepSeekClient")
+    private ChatClient deepSeekClient;
 
     /**
      * Sample call to communicate with LLM
@@ -112,9 +96,7 @@ public class AiController {
     @GetMapping("/ai/json")
     public Object generationJson(@RequestParam(defaultValue  = "随机生成一份用户信息") String userInput){
 
-        ChatClient chatClient = ChatClient.create(zhiPuAiChatModel);
-        User zpContent = chatClient.prompt(userInput).call().entity(User.class);
-        return zpContent;
+        return chatClient.prompt(userInput).call().entity(User.class);
     }
 
     /**
@@ -125,7 +107,6 @@ public class AiController {
     @GetMapping("/ai/json/list")
     public Object generationJsonList(@RequestParam(defaultValue  = "随机生成六份用户信息") String userInput){
 
-        ChatClient chatClient = ChatClient.create(zhiPuAiChatModel);
         List<User> zpContent = chatClient.prompt(userInput).call().entity(new ParameterizedTypeReference<>(){});
         return zpContent;
     }
@@ -138,7 +119,6 @@ public class AiController {
     @GetMapping(value="/ai/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE+";charset=UTF-8")
     public Flux<String> streamContent(@RequestParam(defaultValue  = "和我说一个长笑话") String userInput){
 
-        ChatClient chatClient = ChatClient.create(zhiPuAiChatModel);
         return chatClient.prompt(userInput).advisors(new SimpleLoggerAdvisor()).stream().content();
     }
 
@@ -150,31 +130,11 @@ public class AiController {
     @GetMapping(value="/ai/promote/template")
     public Object promoteTemplate(@RequestParam(defaultValue  = "安果果") String userName){
         String template = "请帮我写一首诗，作者是{userName}, 内容围绕作者的名字去写, 且主题要围绕:{subject}";
-        ChatClient chatClient = ChatClient.create(zhiPuAiChatModel);
         return chatClient.prompt().user(u->u.text(template).param("userName", userName)
                         .params(Map.of("subject","love")))
                 .advisors(new SimpleLoggerAdvisor()).call().content();
     }
 
-    /**
-     * Sample call to communicate with different LLM models
-     * @param
-     * @return
-     */
-    @GetMapping(value="/ai/client/configuration/model1")
-    public Object clientConfiguration1(){
-        return zpChatGlm4vFlashClient.prompt("你最新的训练数据是什么时间？你使用了哪种大模型？").call().content();
-    }
-
-    /**
-     * Sample call to communicate with different LLM models
-     * @param
-     * @return
-     */
-    @GetMapping(value="/ai/client/configuration/model2")
-    public Object clientConfiguration2(){
-        return zpChatGlm4PlusClient.prompt("你最新的训练数据是什么时间？你使用了哪种大模型？").call().content();
-    }
 
     /**
      * Sample call to communicate with LLM (with memory)
@@ -183,7 +143,6 @@ public class AiController {
      */
     @GetMapping(value="/ai/chat/memory")
     public Object chatMemory(String userInput){
-        ChatClient chatClient = ChatClient.create(zhiPuAiChatModel);
         return chatClient.prompt(userInput)
                 .advisors(new SimpleLoggerAdvisor(), MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .advisors( a-> a.param(ChatMemory.CONVERSATION_ID, "conversationId"))
@@ -196,7 +155,7 @@ public class AiController {
      */
     @GetMapping(value="/ai/tools")
     public Object tools(String userInput){
-        return zpChatGlm4PlusClient.prompt(userInput)
+        return chatClient.prompt(userInput)
                 .advisors(new SimpleLoggerAdvisor(), MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .advisors( a-> a.param(ChatMemory.CONVERSATION_ID, "conversationId"))
                 .tools(new DateTimeTools())
@@ -211,7 +170,7 @@ public class AiController {
      */
     @GetMapping(value="/ai/mcp")
     public Object mcp(String userInput){
-        return zpChatGlm4PlusClient.prompt(userInput)
+        return chatClient.prompt(userInput)
                 .advisors(new SimpleLoggerAdvisor(), MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .advisors( a-> a.param(ChatMemory.CONVERSATION_ID, "conversationId"))
                 .toolCallbacks(toolCallbackProvider)
@@ -227,7 +186,7 @@ public class AiController {
      */
     @GetMapping(value="/ai/rag")
     public Object rag(@RequestParam(defaultValue = "我想新增一个配置到DIET Framework，请问该如何开始") String userInput){
-        return zpChatGlm4PlusClient.prompt(userInput)
+        return chatClient.prompt(userInput)
                 .advisors(new SimpleLoggerAdvisor(), MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .advisors( a-> a.param(ChatMemory.CONVERSATION_ID, "conversationId"))
                 .advisors(new SimpleLoggerAdvisor(), new QuestionAnswerAdvisor(dietGuideStore))
@@ -235,51 +194,48 @@ public class AiController {
                 .call().content();
     }
 
-
     /**
-     * Agent used for frontend streamed chat, single Agent to provide all services
-     * @param userInput
+     * Sample call to communicate with different LLM models - Zhi Pu "glm-4v-flash" model
+     * @param
      * @return
      */
-    @GetMapping(value="/ai/agent/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE+";charset=UTF-8")
-    public Flux<String> agentStream(String userInput){
-        Flux<String>  content = zpChatGlm4PlusClient.prompt(userInput).system(AGENT_SYSTEM_PROMPT)
-                .advisors(new SimpleLoggerAdvisor(), MessageChatMemoryAdvisor.builder(chatMemory).build()
-                )
-                .advisors( a-> a.param(ChatMemory.CONVERSATION_ID, "agent-conversationId"))
-                .tools(new FeedInfoQueryTools(safeSqlExecutor), new LogTools())
-                .tools(new DateTimeTools())
-                .stream().content();
-        return content.concatWith(Flux.just("[complete]"));
-    }
-
-    /**
-     * Agent used for frontend chat, single Agent to provide all services
-     * @param userInput
-     * @return
-     */
-    @GetMapping(value="/ai/agent")
-    public String agent(String userInput){
-        String  response = zpChatGlm4PlusClient.prompt(userInput).system(AGENT_SYSTEM_PROMPT)
-                .advisors(new SimpleLoggerAdvisor(), MessageChatMemoryAdvisor.builder(chatMemory).build()
-                        ,new QuestionAnswerAdvisor(dietGuideStore),new QuestionAnswerAdvisor(dietBatchIssueStore)
-                )
-                .advisors( a-> a.param(ChatMemory.CONVERSATION_ID, "agent-conversationId"))
-                .tools(new FeedInfoQueryTools(safeSqlExecutor), new LogTools())
-                .tools(new DateTimeTools())
-                .call().content();
-        System.out.println(response);
-        return response;
+    @GetMapping(value="/ai/model/zhipu/1")
+    public Object zhipuModel1(){
+        return zpChatGlm4vFlashClient.prompt("你最新的训练数据是什么时间？你使用了哪种大模型？").call().content();
     }
 
 
     /**
-     * Sample call to communicate with LLM (based on multiple agents), used for frontend unstreamed chat to provided service based on multiple agents
-     * @param userInput
+     * Sample call to communicate with different LLM models - Zhi Pu "glm-4-plus" model
+     * @param
      * @return
      */
-    @GetMapping(value="/ai/agent/graph")
-    public String agentGraph(String userInput) {
-        return supervisorAgent.execute(userInput);
+    @GetMapping(value="/ai/model/zhipu/2")
+    public Object zhipuModel12(){
+        return zpChatGlm4PlusClient.prompt("你最新的训练数据是什么时间？你使用了哪种大模型？").call().content();
     }
+
+
+    /**
+     * Sample call to communicate with different LLM models - Open AI "gpt-4o-mini" model
+     * @param
+     * @return
+     */
+    @GetMapping(value="/ai/model/openai")
+    public Object openAiModel(){
+        return openAiClient.prompt("你最新的训练数据是什么时间？你使用了哪种大模型？").call().content();
+    }
+
+    /**
+     * Sample call to communicate with different LLM models - Open AI "gpt-4o-mini" model
+     * @param
+     * @return
+     */
+    @GetMapping(value="/ai/model/deepseek")
+    public Object deepSeekModel(){
+        return deepSeekClient.prompt("你最新的训练数据是什么时间？你使用了哪种大模型？").call().content();
+    }
+
+
+
 }

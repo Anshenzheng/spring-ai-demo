@@ -19,7 +19,7 @@ public class BatchSupportAgent extends Agent{
     @Qualifier("dietBatchIssueStore")
     private VectorStore vectorStore;
 
-    public BatchSupportAgent(@Qualifier("zpChatGlm4PlusClient") ChatClient chatClient, ChatMemory chatMemory) {
+    public BatchSupportAgent(ChatClient chatClient, ChatMemory chatMemory) {
         this.chatMemory = chatMemory;
         this.chatClient = chatClient;
         this.conversationIdPrefix = "agent-batch-support-conversationId";
@@ -31,7 +31,7 @@ public class BatchSupportAgent extends Agent{
             1. 根据用户的提供的日志或错误描述, 分析出潜在的问题, 并要求用户提供feed的job信息
             或者根据用户提供的feed相关信息,去数据库中查出feed的job name
             2. 所有的日志文件都存放在E:\\Annan\\practise\\logs目录下, 文件名为格式为{job_name}.err.{timestamp} 和 
-            {job_name}.out.{timestamp}. 请查看最新的日志文件,分析错误原因,并找出可能的root cause
+            {job_name}.out.{timestamp}. 你需要查看最新的日志文件,分析错误原因,并找出可能的root cause
             3. 根据错误信息去查找过往的issue tracker 
             4. 综合以上,将你获取到的所有信息进行分析,并返回相关且可行的方案/建议给用户
             

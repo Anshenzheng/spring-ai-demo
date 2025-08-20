@@ -18,7 +18,7 @@ public class DIETUsageAgent extends Agent{
     @Qualifier("dietGuideStore")
     private VectorStore vectorStore;
 
-    public DIETUsageAgent(@Qualifier("zpChatGlm4PlusClient") ChatClient chatClient, ChatMemory chatMemory) {
+    public DIETUsageAgent(ChatClient chatClient, ChatMemory chatMemory) {
         this.chatMemory = chatMemory;
         this.chatClient = chatClient;
         this.conversationIdPrefix = "agent-diet-usage-conversationId";

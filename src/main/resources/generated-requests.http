@@ -1,11 +1,15 @@
 GET http://localhost:8080/spring-ai/ai/promote/template?userName=海洋
 
 ###
-
-GET http://localhost:8080/spring-ai/ai/client/configuration/model1
-
+GET http://localhost:8090/spring-ai/ai/model/openai
 ###
-GET http://localhost:8080/spring-ai/ai/client/configuration/model2
+GET http://localhost:8090/spring-ai/ai/model/zhipu/1
+###
+GET http://localhost:8090/spring-ai/ai/model/zhipu/2
+
+### 如果报错返回402， 说明需要你充值
+GET http://localhost:8090/spring-ai/ai/model/deepseek
+
 
 ###
 GET http://localhost:8080/spring-ai/ai/chat/memory?userInput=我是谁
@@ -36,7 +40,7 @@ GET http://localhost:8090/spring-ai/ai/agent?userInput=what you can do for me
 
 
 ###
-GET http://localhost:8090/spring-ai/ai/agent?userInput=I don't know the job name, I only know the feed name contains keyword "assumption"
+GET http://localhost:8090/spring-ai/ai/agent?userInput=I only know the feed name contains keyword "assumption", please list all the related job names
 
 ###
 GET http://localhost:8090/spring-ai/ai/agent?userInput=the job name is 12345_ETL_assumptions_loading
@@ -47,5 +51,3 @@ GET http://localhost:8090/spring-ai/ai/agent?userInput=Can you try again?
 ###
 GET http://localhost:8090/spring-ai/ai/agent/graph?userInput=who are you
 
-###
-GET http://localhost:8090/spring-ai/ai/agent/graph?userInput=who are you

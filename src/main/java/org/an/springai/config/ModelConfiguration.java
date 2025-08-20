@@ -6,19 +6,20 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chroma.vectorstore.ChromaApi;
 import org.springframework.ai.chroma.vectorstore.ChromaVectorStore;
 import org.springframework.ai.deepseek.DeepSeekChatModel;
+import org.springframework.ai.deepseek.DeepSeekChatOptions;
 import org.springframework.ai.deepseek.api.DeepSeekApi;
 import org.springframework.ai.document.DocumentTransformer;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.zhipuai.ZhiPuAiChatModel;
 import org.springframework.ai.zhipuai.ZhiPuAiChatOptions;
 import org.springframework.ai.zhipuai.api.ZhiPuAiApi;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.web.client.RestClient;
 
 
@@ -44,6 +45,12 @@ public class ModelConfiguration {
     @Value("${spring.ai.vectorstore.chroma.tenant}")
     private String tenantName;
 
+    @Value("${spring.ai.openai.api-key}")
+    private String openAiAPIKey;
+
+    @Value("${spring.ai.openai.chat.model}")
+    private String openAiModel;
+
     @Bean
     public ChatClient zpChatGlm4vFlashClient(){
         ZhiPuAiApi zhiPuAiApi = new ZhiPuAiApi(zpAPIKey);
@@ -54,6 +61,7 @@ public class ModelConfiguration {
     }
 
     @Bean
+    @Primary
     public ChatClient zpChatGlm4PlusClient(){
         ZhiPuAiApi zhiPuAiApi = new ZhiPuAiApi(zpAPIKey);
         ZhiPuAiChatOptions options = ZhiPuAiChatOptions.builder().model("glm-4-plus").temperature(0.2).build();
@@ -101,10 +109,25 @@ public class ModelConfiguration {
 
 
     @Bean
+    @Lazy
     public ChatClient deepSeekClient(){
         DeepSeekApi deepSeekApi = DeepSeekApi.builder().apiKey(deepSeekAPIKey).build();
-        ChatModel deepSeekChatModel = DeepSeekChatModel.builder().deepSeekApi(deepSeekApi).build();
-        return ChatClient.builder(deepSeekChatModel).build();
+        DeepSeekChatOptions deepSeekChatOptions = DeepSeekChatOptions.builder().model("deepseek-chat").temperature(0.7).build();
+        ChatModel chatModel = DeepSeekChatModel.builder().deepSeekApi(deepSeekApi).defaultOptions(deepSeekChatOptions).build();
+
+        return ChatClient.builder(chatModel).build();
     }
+
+    @Bean
+    @Lazy
+    public ChatClient openAiClient(){
+        OpenAiApi openAiApi = OpenAiApi.builder().apiKey(openAiAPIKey).build();
+        OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder().model(openAiModel).temperature(0.7).build();
+        ChatModel openAiChatModel = OpenAiChatModel.builder().openAiApi(openAiApi).defaultOptions(openAiChatOptions).build();
+
+        return  ChatClient.builder(openAiChatModel).build();
+    }
+
+
 
 }
