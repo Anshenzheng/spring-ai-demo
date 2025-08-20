@@ -56,14 +56,29 @@ spring-ai
 
 
 
-```
+```properties
 spring.ai.zhipuai.api-key=你的api-key值
 
 ```
 
+5. 如需接入openai或者deepseek, 还需配置以下参数
+```properties
+spring.ai.deepseek.api-key=你的api-key值
+
+#openai
+spring.ai.openai.api-key=你的api-key值
+spring.ai.openai.chat.model=gpt-4o-mini
+```
+6. 如果接入了openai, 则需科学上网并配置代理到JVM参数，不然无法访问Open ai的API.
+相应jvm参数配置如下, 
+```shell
+-Dhttp.proxyHost={替换为你的代理地址} -Dhttp.proxyPort={替换为你的代理端口}
+-Dhttps.proxyHost={替换为你的代理地址} -Dhttps.proxyPort={替换为你的代理端口}
+-Dhttp.nonProxyHosts="localhost|127.0.0.1"
+-Dhttps.nonProxyHosts="localhost|127.0.0.1"
+```
+
 ### 3.3 TryChroma 云数据库配置
-
-
 
 1.  访问 TryChroma 网站（[官方网站](https://trychroma.com/)）
 
@@ -77,7 +92,7 @@ spring.ai.zhipuai.api-key=你的api-key值
 
 
 
-```
+```properties
 spring.ai.vectorstore.chroma.chromaDBToken=你的token值
 spring.ai.vectorstore.chroma.tenant=你的tenant值
 
